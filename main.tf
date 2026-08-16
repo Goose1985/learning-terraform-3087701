@@ -3,7 +3,7 @@ data "aws_ami" "app_ami" {
 
   filter {
     name   = "name"
-    values = ["bitnami-tomcat-9*"]
+    values = ["al2023-ami-*-x86_64"]
   }
 
   filter {
@@ -11,12 +11,21 @@ data "aws_ami" "app_ami" {
     values = ["hvm"]
   }
 
-  owners = ["979382823631"] # Bitnami
+  owners = ["amazon"]
 }
 
 resource "aws_instance" "web" {
   ami           = data.aws_ami.app_ami.id
   instance_type = "t3.nano"
+
+  user_data = <<-EOF
+              #!/bin/bash
+              dnf install -y java-17-amazon-corretto-headless
+              curl -fsSL https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.98/bin/apache-tomcat-9.0.98.tar.gz -o /tmp/tomcat.tar.gz
+              mkdir -p /opt/tomcat
+              tar xzf /tmp/tomcat.tar.gz -C /opt/tomcat --strip-components=1
+              /opt/tomcat/bin/startup.sh
+              EOF
 
   tags = {
     Name = "HelloWorld"
